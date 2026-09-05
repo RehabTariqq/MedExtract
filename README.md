@@ -1,9 +1,14 @@
+# MedExtract
+
 An AI-powered medical document intelligence system. Upload medical reports (PDF), extract structured test data, and ask grounded questions about your results using RAG and an AI agent.
 
-## Status
-🚧 In active development — following a structured build roadmap.
+This project is being built on Ubuntu Linux, using Python, FastAPI, MongoDB, React, and modern AI/RAG tooling.
 
-## Tech Stack
+## Status
+In active development, following a structured build roadmap.
+
+## Development Environment
+- OS: Ubuntu Linux (24.04)
 - Backend: Python, FastAPI, MongoDB
 - Frontend: React, TypeScript, Vite, Tailwind CSS
 - AI: LLM (OpenAI/Gemini), RAG, Qdrant vector database, LangGraph agents
