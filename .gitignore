@@ -2,6 +2,8 @@ venv/
 __pycache__/
 *.pyc
 .env
+*.save
+
 
 # Node
 node_modules/
