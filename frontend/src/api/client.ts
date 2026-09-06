@@ -90,3 +90,30 @@ export async function askAllDocuments(question: string): Promise<QAResponse> {
   }
   return res.json();
 }
+export interface TestHistoryItem {
+  document_id: string;
+  filename: string;
+  uploaded_at: string;
+  value: string;
+  unit: string | null;
+  reference_range: string | null;
+  status: string;
+}
+
+export interface ComparisonResponse {
+  test_name: string;
+  history: TestHistoryItem[];
+  comparisons: { from: TestHistoryItem; to: TestHistoryItem; difference: number | null }[];
+}
+
+export async function getTestHistory(testName: string): Promise<ComparisonResponse> {
+  return apiGet<ComparisonResponse>(`/api/v1/tests/${encodeURIComponent(testName)}/history`);
+}
+export interface SearchResults {
+  keyword_results: any[];
+  semantic_results: any[];
+}
+
+export async function searchAll(query: string): Promise<SearchResults> {
+  return apiGet<SearchResults>(`/api/v1/search?q=${encodeURIComponent(query)}`);
+}

@@ -129,6 +129,9 @@ function App() {
         >
           Ask a question across all your reports &rarr;
         </Link>
+                <Link to="/tests/history" className="inline-block mt-2 text-sm text-[#4A7C6E] hover:underline">
+          Track a test over time &rarr;
+        </Link>
 
         <div className="mt-12">
           <h3 className="text-sm uppercase tracking-wide text-[#1C2B33]/50 mb-3">
