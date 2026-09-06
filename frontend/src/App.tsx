@@ -123,6 +123,12 @@ function App() {
         <div className="mt-6 text-xs text-[#1C2B33]/50 leading-relaxed border-l-2 border-[#E3DFD6] pl-3 min-h-[2.5rem] transition-opacity duration-500">
           {NOTES[noteIndex]}
         </div>
+                <Link
+          to="/ask"
+          className="inline-block mt-4 text-sm text-[#4A7C6E] hover:underline"
+        >
+          Ask a question across all your reports &rarr;
+        </Link>
 
         <div className="mt-12">
           <h3 className="text-sm uppercase tracking-wide text-[#1C2B33]/50 mb-3">
