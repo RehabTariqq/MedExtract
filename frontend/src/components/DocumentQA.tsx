@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { askDocumentQuestion, type QAResponse } from "../api/client";
+import EvidencePanel from "./EvidencePanel";
 
 function DocumentQA({ documentId }: { documentId: string }) {
   const [question, setQuestion] = useState("");
@@ -34,15 +35,7 @@ function DocumentQA({ documentId }: { documentId: string }) {
           <div key={i}>
             <p className="text-sm font-medium mb-1">{entry.question}</p>
             <p className="text-sm text-[#1C2B33]/80 leading-relaxed">{entry.result.answer}</p>
-            {entry.result.sources.length > 0 && (
-              <div className="mt-2 space-y-1">
-                {entry.result.sources.map((s, j) => (
-                  <p key={j} className="text-xs text-[#4A7C6E]">
-                    Source: Page {s.page_number} &mdash; "{s.source_text.slice(0, 100)}..."
-                  </p>
-                ))}
-              </div>
-            )}
+            <EvidencePanel sources={entry.result.sources} />
           </div>
         ))}
       </div>
