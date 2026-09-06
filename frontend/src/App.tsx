@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { uploadDocument, getDocuments, type DocumentItem } from "./api/client";
 
 const NOTES = [
@@ -132,24 +133,26 @@ function App() {
           ) : (
             <ul className="divide-y divide-[#E3DFD6]">
               {documents.map((doc) => (
-                <li key={doc.id} className="py-3 flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1C2B33" strokeOpacity="0.4" strokeWidth="1.6">
-                      <path d="M6 3h9l4 4v14a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z" />
-                      <path d="M15 3v4h4" />
-                    </svg>
-                    {doc.filename}
-                  </span>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-sm ${
-                      doc.status === "processed"
-                        ? "text-[#4A7C6E] bg-[#4A7C6E]/10"
-                        : "text-[#C77D3C] bg-[#C77D3C]/10"
-                    }`}
-                  >
-                    {doc.status}
-                  </span>
-                </li>
+                <Link to={`/documents/${doc.id}`} key={doc.id}>
+                  <li className="py-3 flex items-center justify-between hover:bg-[#4A7C6E]/5 px-2 -mx-2 rounded-sm transition-colors cursor-pointer">
+                    <span className="flex items-center gap-2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1C2B33" strokeOpacity="0.4" strokeWidth="1.6">
+                        <path d="M6 3h9l4 4v14a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z" />
+                        <path d="M15 3v4h4" />
+                      </svg>
+                      {doc.filename}
+                    </span>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-sm ${
+                        doc.status === "processed"
+                          ? "text-[#4A7C6E] bg-[#4A7C6E]/10"
+                          : "text-[#C77D3C] bg-[#C77D3C]/10"
+                      }`}
+                    >
+                      {doc.status}
+                    </span>
+                  </li>
+                </Link>
               ))}
             </ul>
           )}

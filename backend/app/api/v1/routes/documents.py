@@ -1,6 +1,15 @@
 from fastapi import APIRouter, UploadFile, File
 from app.schemas.document import DocumentResponse
-from app.services import document_service, storage_service, pdf_service
+from app.services import (
+    document_service,
+    storage_service,
+    pdf_service,
+    extraction_service,
+    summary_service,
+    chunking_service,
+    embedding_service,
+    vector_store,
+)
 from app.core.exceptions import ValidationException
 
 router = APIRouter()
@@ -29,6 +38,21 @@ async def upload_document(file: UploadFile = File(...)):
     pages = pdf_service.extract_text_from_pdf(file_path)
     await document_service.update_document_pages(document.id, pages, "processed")
 
+    all_tests = []
+    for page in pages:
+        tests = extraction_service.extract_tests_from_page(page["text"], page["page_number"])
+        all_tests.extend(tests)
+    await document_service.save_extracted_tests(document.id, all_tests)
+
+    summary_text = summary_service.generate_report_summary(all_tests)
+    await document_service.save_summary(document.id, summary_text)
+
+    chunks = chunking_service.chunk_pages(pages, document.id)
+    if chunks:
+        chunk_texts = [c["text"] for c in chunks]
+        embeddings = embedding_service.embed_texts(chunk_texts)
+        vector_store.upsert_chunks(chunks, embeddings)
+
     document.status = "processed"
     return document
 
@@ -46,3 +70,14 @@ async def get_document(document_id: str):
 @router.get("/{document_id}/pages")
 async def get_document_pages(document_id: str):
     return await document_service.get_document_pages(document_id)
+
+
+@router.get("/{document_id}/tests")
+async def get_document_tests(document_id: str):
+    return await document_service.get_document_tests(document_id)
+
+
+@router.get("/{document_id}/summary")
+async def get_document_summary(document_id: str):
+    summary = await document_service.get_summary(document_id)
+    return {"summary": summary}
