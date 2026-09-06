@@ -27,8 +27,8 @@ def answer_question(question: str, document_id: str | None = None) -> dict:
             "sources": [],
         }
 
-    context = "\n\n".join(
-        f"[Page {c['page_number']}]: {c['text']}" for c in chunks
+        context = "\n\n".join(
+        f"[Document {c['document_id']}, Page {c['page_number']}]: {c['text']}" for c in chunks
     )
     prompt = RAG_PROMPT.format(context=context, question=question)
 

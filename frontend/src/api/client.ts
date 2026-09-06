@@ -79,3 +79,14 @@ export async function askDocumentQuestion(documentId: string, question: string):
   }
   return res.json();
 }
+export async function askAllDocuments(question: string): Promise<QAResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  });
+  if (!res.ok) {
+    throw new Error("Failed to get answer");
+  }
+  return res.json();
+}
