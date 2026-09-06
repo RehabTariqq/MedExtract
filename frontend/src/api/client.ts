@@ -57,3 +57,25 @@ export async function getDocumentTests(documentId: string): Promise<MedicalTest[
 export async function getDocumentSummary(documentId: string): Promise<{ summary: string }> {
   return apiGet<{ summary: string }>(`/api/v1/documents/${documentId}/summary`);
 }
+export interface QASource {
+  document_id: string;
+  page_number: number;
+  source_text: string;
+}
+
+export interface QAResponse {
+  answer: string;
+  sources: QASource[];
+}
+
+export async function askDocumentQuestion(documentId: string, question: string): Promise<QAResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/documents/${documentId}/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  });
+  if (!res.ok) {
+    throw new Error("Failed to get answer");
+  }
+  return res.json();
+}
