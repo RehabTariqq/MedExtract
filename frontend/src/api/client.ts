@@ -117,3 +117,12 @@ export interface SearchResults {
 export async function searchAll(query: string): Promise<SearchResults> {
   return apiGet<SearchResults>(`/api/v1/search?q=${encodeURIComponent(query)}`);
 }
+export async function agentChat(message: string): Promise<{ answer: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/agent/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) throw new Error("Agent request failed");
+  return res.json();
+}
