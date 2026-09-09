@@ -81,7 +81,7 @@ function DocumentDetail() {
               </tr>
             </thead>
             <tbody>
-                      {id && <DocumentQA documentId={id} />}
+                      {id && <DocumentQA documentId={id} />}S
               {tests.map((test, i) => (
                 <tr key={i} className="border-b border-[#E3DFD6]/60">
                   <td className="py-3 pr-4">{test.test_name}</td>

@@ -5,7 +5,9 @@ import "./index.css";
 import App from "./App.tsx";
 import DocumentDetail from "./pages/DocumentDetail.tsx";
 import AskAllReports from "./pages/AskAllReports.tsx";
-
+import TestHistory from "./pages/TestHistory.tsx";
+// ...
+<Route path="/tests/history" element={<TestHistory />} />
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>

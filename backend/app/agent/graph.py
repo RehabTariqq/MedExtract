@@ -1,8 +1,13 @@
 from typing import TypedDict, Optional
-from langgraph.graph import StateGraph, END
 from app.agent.tools import execute_tool
 from app.services.llm.factory import get_llm_client
 import json
+
+LANGGRAPH_AVAILABLE = True
+try:
+    from langgraph.graph import StateGraph, END
+except ImportError:
+    LANGGRAPH_AVAILABLE = False
 
 
 class GraphState(TypedDict):
@@ -49,6 +54,9 @@ Answer:"""
 
 
 def build_graph():
+    if not LANGGRAPH_AVAILABLE:
+        return None
+
     graph = StateGraph(GraphState)
     graph.add_node("route", route_query)
     graph.add_node("compare", run_compare)

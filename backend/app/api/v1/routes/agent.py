@@ -1,7 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.agent.agent import run_agent
-from app.agent.graph import agent_graph
+from app.agent.graph import agent_graph, LANGGRAPH_AVAILABLE
 from app.agent.memory import save_turn, get_recent_turns
 
 router = APIRouter()
@@ -23,5 +23,10 @@ async def agent_chat(request: AgentRequest):
 
 @router.post("/agent/workflow")
 async def agent_workflow(request: AgentRequest):
+    if not LANGGRAPH_AVAILABLE or agent_graph is None:
+        raise HTTPException(
+            status_code=503,
+            detail="LangGraph workflow is not available. Install the 'langgraph' package to enable this endpoint."
+        )
     result = await agent_graph.ainvoke({"query": request.message, "route": None, "tool_result": None, "answer": None})
     return {"answer": result["answer"]}

@@ -1,0 +1,110 @@
+/home/lenovo/medextract
+├── backend
+│   ├── app
+│   │   ├── agent
+│   │   │   ├── agent.py
+│   │   │   ├── graph.py
+│   │   │   ├── memory.py
+│   │   │   └── tools.py
+│   │   ├── api
+│   │   │   ├── __init__.py
+│   │   │   └── v1
+│   │   │       ├── __init__.py
+│   │   │       ├── router.py
+│   │   │       └── routes
+│   │   │           ├── agent.py
+│   │   │           ├── auth.py
+│   │   │           ├── comparison.py
+│   │   │           ├── documents.py
+│   │   │           ├── __init__.py
+│   │   │           ├── qa.py
+│   │   │           ├── search.py
+│   │   │           └── users.py
+│   │   ├── core
+│   │   │   ├── config.py
+│   │   │   ├── deps.py
+│   │   │   ├── exceptions.py
+│   │   │   ├── __init__.py
+│   │   │   └── security.py
+│   │   ├── db
+│   │   │   ├── database.py
+│   │   │   └── __init__.py
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   ├── models
+│   │   │   └── __init__.py
+│   │   ├── schemas
+│   │   │   ├── common.py
+│   │   │   ├── comparison.py
+│   │   │   ├── document.py
+│   │   │   ├── __init__.py
+│   │   │   ├── medical_test.py
+│   │   │   ├── qa.py
+│   │   │   └── user.py
+│   │   └── services
+│   │       ├── chunking_service.py
+│   │       ├── comparison_service.py
+│   │       ├── document_service.py
+│   │       ├── embedding_service.py
+│   │       ├── extraction_service.py
+│   │       ├── __init__.py
+│   │       ├── llm
+│   │       │   ├── base.py
+│   │       │   ├── factory.py
+│   │       │   └── openai_client.py
+│   │       ├── ocr_service.py
+│   │       ├── pdf_service.py
+│   │       ├── rag_service.py
+│   │       ├── retrieval_service.py
+│   │       ├── search_service.py
+│   │       ├── storage_service.py
+│   │       ├── summary_service.py
+│   │       ├── user_service.py
+│   │       └── vector_store.py
+│   ├── requirements.txt
+│   ├── requirements.txt~
+│   └── storage
+│       └── uploads
+├── frontend
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── public
+│   │   ├── favicon.svg
+│   │   └── icons.svg
+│   ├── README.md
+│   ├── src
+│   │   ├── api
+│   │   │   └── client.ts
+│   │   ├── App.css
+│   │   ├── App.tsx
+│   │   ├── assets
+│   │   │   ├── hero.png
+│   │   │   ├── react.svg
+│   │   │   └── vite.svg
+│   │   ├── components
+│   │   │   ├── DocumentQA.tsx
+│   │   │   └── EvidencePanel.tsx
+│   │   ├── index.css
+│   │   ├── main.tsx
+│   │   └── pages
+│   │       ├── AgentChat.tsx
+│   │       ├── AskAllReports.tsx
+│   │       ├── DocumentDetail.tsx
+│   │       ├── Search.tsx
+│   │       └── TestHistory.tsx
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
+├── project_structure.txt
+├── qdrant_storage
+│   ├── aliases
+│   │   └── data.json
+│   ├── collections
+│   └── raft_state.json
+├── README.md
+├── sandbox
+└── sandbox~
+
+27 directories, 81 files
