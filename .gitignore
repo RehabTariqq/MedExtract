@@ -15,3 +15,5 @@ dist/
 
 # Editors
 .vscode/
+mongo_data/
+qdrant_storage/
