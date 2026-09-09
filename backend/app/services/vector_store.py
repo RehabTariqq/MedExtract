@@ -1,3 +1,4 @@
+import os
 import uuid
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
@@ -6,7 +7,10 @@ from app.services.embedding_service import EMBEDDING_DIM
 
 COLLECTION_NAME = "medextract_chunks"
 
-client = QdrantClient(host="localhost", port=6333)
+QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
+QDRANT_PORT = int(os.getenv("QDRANT_PORT", "6333"))
+
+client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 
 
 def ensure_collection():

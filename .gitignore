@@ -17,3 +17,4 @@ dist/
 .vscode/
 mongo_data/
 qdrant_storage/
+grep -q "^\.env$" ~/medextract/.gitignore || echo ".env" >> ~/medextract/.gitignore
