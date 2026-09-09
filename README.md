@@ -6,6 +6,9 @@ This project is being built on Ubuntu Linux, using Python, FastAPI, MongoDB, Rea
 
 ## Status
 In active development, following a structured build roadmap.
+<img width="1600" height="1000" alt="image" src="https://github.com/user-attachments/assets/da6e2d77-e551-45cb-8fde-cf5a8b1d9b96" />
+
+
 
 ## Development Environment
 - OS: Ubuntu Linux (24.04)
