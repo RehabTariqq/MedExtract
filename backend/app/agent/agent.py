@@ -1,9 +1,9 @@
 import json
-from openai import OpenAI
-from app.core.config import OPENAI_API_KEY
+from groq import Groq
+from app.core.config import GROQ_API_KEY
 from app.agent.tools import TOOL_DEFINITIONS, execute_tool
 
-_client = OpenAI(api_key=OPENAI_API_KEY)
+_client = Groq(api_key=GROQ_API_KEY)
 
 SYSTEM_PROMPT = """You are MedExtract's assistant. You help users understand their medical reports
 using the tools available to you. You must use tool results exactly as returned — never invent
@@ -18,7 +18,7 @@ async def run_agent(user_message: str, history: list[dict] | None = None) -> dic
     messages.append({"role": "user", "content": user_message})
 
     response = _client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="llama-3.3-70b-versatile",
         messages=messages,
         tools=TOOL_DEFINITIONS,
     )
@@ -40,7 +40,7 @@ async def run_agent(user_message: str, history: list[dict] | None = None) -> dic
             })
 
         final_response = _client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="llama-3.3-70b-versatile",
             messages=messages,
         )
         final_text = final_response.choices[0].message.content

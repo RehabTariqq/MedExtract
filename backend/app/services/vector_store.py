@@ -5,7 +5,7 @@ from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, Fi
 
 from app.services.embedding_service import EMBEDDING_DIM
 
-COLLECTION_NAME = "medextract_chunks"
+COLLECTION_NAME = "medextract_chunks_v2"
 
 QDRANT_URL = os.getenv("QDRANT_URL", "")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")

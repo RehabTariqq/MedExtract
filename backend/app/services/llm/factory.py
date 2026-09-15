@@ -1,6 +1,6 @@
 from app.services.llm.base import LLMClient
-from app.services.llm.openai_client import OpenAIClient
+from app.services.llm.groq_client import GroqClient
 
 
 def get_llm_client() -> LLMClient:
-    return OpenAIClient()
+    return GroqClient()
