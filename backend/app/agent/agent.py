@@ -18,7 +18,7 @@ async def run_agent(user_message: str, history: list[dict] | None = None) -> dic
     messages.append({"role": "user", "content": user_message})
 
     response = _client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="llama-3.1-8b-instant",
         messages=messages,
         tools=TOOL_DEFINITIONS,
     )
@@ -40,7 +40,7 @@ async def run_agent(user_message: str, history: list[dict] | None = None) -> dic
             })
 
         final_response = _client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",
             messages=messages,
         )
         final_text = final_response.choices[0].message.content
