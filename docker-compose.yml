@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   mongodb:
     image: mongo:7
@@ -19,24 +17,31 @@ services:
     build: ./backend
     ports:
       - "8000:8000"
+    # GROQ_API_KEY, COHERE_API_KEY, JWT_SECRET_KEY etc. come from backend/.env
+    env_file:
+      - ./backend/.env
     environment:
+      # These override whatever is in backend/.env so Docker uses its own containers
       - MONGO_URI=mongodb://mongodb:27017
-      - DATABASE_NAME=medextract
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - QDRANT_URL=
+      - QDRANT_API_KEY=
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
+      - CORS_ORIGINS=http://localhost:5173
     depends_on:
       - mongodb
       - qdrant
     volumes:
       - ./backend/storage:/app/storage
-
     dns:
       - 8.8.8.8
       - 8.8.4.4
+
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000
     ports:
       - "5173:80"
     depends_on:

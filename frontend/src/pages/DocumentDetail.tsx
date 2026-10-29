@@ -1,10 +1,11 @@
-import DocumentQA from "../components/DocumentQA";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import DocumentQA from "../components/DocumentQA";
 import {
   getDocument,
   getDocumentTests,
   getDocumentSummary,
+  reprocessDocument,
   type DocumentItem,
   type MedicalTest,
 } from "../api/client";
@@ -22,21 +23,54 @@ function DocumentDetail() {
   const [tests, setTests] = useState<MedicalTest[]>([]);
   const [summary, setSummary] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!id) return;
-    Promise.all([getDocument(id), getDocumentTests(id), getDocumentSummary(id)])
-      .then(([doc, testResults, summaryResult]) => {
-        setDocument(doc);
+    try {
+      const doc = await getDocument(id);
+      setDocument(doc);
+      if (doc.status !== "processing") {
+        const [testResults, summaryResult] = await Promise.all([
+          getDocumentTests(id),
+          getDocumentSummary(id),
+        ]);
         setTests(testResults);
         setSummary(summaryResult.summary);
-      })
-      .finally(() => setLoading(false));
+      }
+      setLoadError(null);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Could not load this report");
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // While the backend is still working, check again every 3 seconds.
+  useEffect(() => {
+    if (document?.status !== "processing") return;
+    const timer = setInterval(load, 3000);
+    return () => clearInterval(timer);
+  }, [document?.status, load]);
+
+  const handleReprocess = async () => {
+    if (!id) return;
+    try {
+      setDocument(await reprocessDocument(id));
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Could not reprocess");
+    }
+  };
 
   if (loading) {
     return <div className="max-w-3xl mx-auto px-8 py-16 text-[#1C2B33]/50">Loading...</div>;
   }
+
+  const processing = document?.status === "processing";
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#1C2B33]">
@@ -53,6 +87,27 @@ function DocumentDetail() {
           Status: {document?.status} &middot; {tests.length} test{tests.length !== 1 ? "s" : ""} found
         </p>
 
+        {loadError && <p className="text-[#C77D3C] text-sm mb-6">{loadError}</p>}
+
+        {processing && (
+          <div className="mb-8 border border-[#4A7C6E]/30 bg-[#4A7C6E]/5 rounded-sm p-4 text-sm">
+            Reading your report and extracting values. This usually takes under a minute —
+            this page updates automatically.
+          </div>
+        )}
+
+        {document?.status === "failed" && (
+          <div className="mb-8 border border-[#C77D3C]/40 bg-[#C77D3C]/5 rounded-sm p-4 text-sm">
+            <p className="mb-2">Processing failed: {document.error || "unknown error"}</p>
+            <button
+              onClick={handleReprocess}
+              className="bg-[#4A7C6E] text-[#FAF9F6] px-3 py-1.5 rounded-sm hover:bg-[#3d685c] transition-colors"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
         {summary && (
           <div className="mb-10 bg-[#4A7C6E]/5 border border-[#4A7C6E]/20 rounded-sm p-5">
             <p className="text-xs uppercase tracking-wide text-[#4A7C6E] mb-2">AI Summary</p>
@@ -65,11 +120,13 @@ function DocumentDetail() {
           </div>
         )}
 
-        {tests.length === 0 ? (
+        {!processing && tests.length === 0 && (
           <p className="text-[#1C2B33]/50 text-sm">
             No structured test data was extracted from this document.
           </p>
-        ) : (
+        )}
+
+        {tests.length > 0 && (
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="border-b border-[#E3DFD6] text-left text-[#1C2B33]/50">
@@ -81,27 +138,27 @@ function DocumentDetail() {
               </tr>
             </thead>
             <tbody>
-                      {id && <DocumentQA documentId={id} />}S
               {tests.map((test, i) => (
                 <tr key={i} className="border-b border-[#E3DFD6]/60">
                   <td className="py-3 pr-4">{test.test_name}</td>
                   <td className="py-3 pr-4">
                     {test.value} {test.unit || ""}
                   </td>
-                  <td className="py-3 pr-4 text-[#1C2B33]/60">
-                    {test.reference_range || "—"}
-                  </td>
+                  <td className="py-3 pr-4 text-[#1C2B33]/60">{test.reference_range || "—"}</td>
                   <td className="py-3 pr-4">
                     <span className={`text-xs px-2 py-0.5 rounded-sm ${statusStyles[test.status] || statusStyles.unclear}`}>
                       {test.status}
                     </span>
                   </td>
-                  <td className="py-3 pr-4 text-[#1C2B33]/40">{test.page_number}</td>
+                  <td className="py-3 pr-4 text-[#1C2B33]/40">{test.page_number ?? "—"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
+
+        {/* Always available once processing is done, whether or not tests were extracted */}
+        {id && !processing && <DocumentQA documentId={id} />}
       </main>
     </div>
   );

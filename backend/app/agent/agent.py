@@ -1,9 +1,7 @@
 import json
-from groq import Groq
-from app.core.config import GROQ_API_KEY
+from app.core.config import GROQ_MODEL
 from app.agent.tools import TOOL_DEFINITIONS, execute_tool
-
-_client = Groq(api_key=GROQ_API_KEY)
+from app.services.llm.groq_client import get_groq
 
 SYSTEM_PROMPT = """You are MedExtract's assistant. You help users understand their medical reports
 using the tools available to you. You must use tool results exactly as returned — never invent
@@ -17,8 +15,8 @@ async def run_agent(user_message: str, history: list[dict] | None = None) -> dic
         messages.extend(history)
     messages.append({"role": "user", "content": user_message})
 
-    response = _client.chat.completions.create(
-        model="openai/gpt-oss-120b",
+    response = get_groq().chat.completions.create(
+        model=GROQ_MODEL,
         messages=messages,
         tools=TOOL_DEFINITIONS,
     )
@@ -39,8 +37,8 @@ async def run_agent(user_message: str, history: list[dict] | None = None) -> dic
                 "content": json.dumps(result, default=str),
             })
 
-        final_response = _client.chat.completions.create(
-            model="openai/gpt-oss-120b",
+        final_response = get_groq().chat.completions.create(
+            model=GROQ_MODEL,
             messages=messages,
         )
         final_text = final_response.choices[0].message.content

@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -8,7 +10,11 @@ from slowapi.errors import RateLimitExceeded
 
 from app.db.database import check_connection
 from app.api.v1.router import api_router
+from app.core.config import CORS_ORIGINS
 from app.core.exceptions import MedExtractException
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("medextract")
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -19,7 +25,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://medextract-frontend.onrender.com"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,6 +52,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
     return JSONResponse(
         status_code=500,
         content={"error": "Internal server error", "detail": None},

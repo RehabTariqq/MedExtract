@@ -1,43 +1,59 @@
-const API_BASE_URL = "https://medextract-backend-mjjf.onrender.com";
+// Set VITE_API_URL in frontend/.env.local (local) or in your Render build settings (production).
+const API_BASE_URL: string =
+  import.meta.env.VITE_API_URL || "https://medextract-backend-mjjf.onrender.com";
+
+async function errorMessage(res: Response, fallback: string): Promise<string> {
+  try {
+    const body = await res.json();
+    if (typeof body?.error === "string") return body.error;
+    if (typeof body?.detail === "string") return body.detail;
+  } catch {
+    /* response was not JSON */
+  }
+  return `${fallback} (HTTP ${res.status})`;
+}
 
 export async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`);
-  if (!res.ok) {
-    throw new Error(`API error: ${res.status}`);
-  }
+  if (!res.ok) throw new Error(await errorMessage(res, "Request failed"));
   return res.json();
 }
 
-export async function uploadDocument(file: File): Promise<any> {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const res = await fetch(`${API_BASE_URL}/api/v1/documents/upload`, {
+async function apiPost<T>(path: string, body?: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
-    body: formData,
+    headers: body ? { "Content-Type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
   });
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || "Upload failed");
-  }
+  if (!res.ok) throw new Error(await errorMessage(res, "Request failed"));
   return res.json();
 }
+
+/* ---------- documents ---------- */
 
 export interface DocumentItem {
   id: string;
   filename: string;
-  status: string;
+  status: "uploaded" | "processing" | "processed" | "failed" | string;
   uploaded_at: string;
+  error?: string | null;
 }
 
-export async function getDocuments(): Promise<DocumentItem[]> {
-  return apiGet<DocumentItem[]>("/api/v1/documents/");
+export async function uploadDocument(file: File): Promise<DocumentItem> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_BASE_URL}/api/v1/documents/upload`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) throw new Error(await errorMessage(res, "Upload failed"));
+  return res.json();
 }
 
-export async function getDocument(documentId: string): Promise<DocumentItem> {
-  return apiGet<DocumentItem>(`/api/v1/documents/${documentId}`);
-}
+export const getDocuments = () => apiGet<DocumentItem[]>("/api/v1/documents/");
+export const getDocument = (id: string) => apiGet<DocumentItem>(`/api/v1/documents/${id}`);
+export const reprocessDocument = (id: string) =>
+  apiPost<DocumentItem>(`/api/v1/documents/${id}/reprocess`);
 
 export interface MedicalTest {
   test_name: string;
@@ -46,17 +62,17 @@ export interface MedicalTest {
   reference_range: string | null;
   status: string;
   category: string | null;
-  page_number: number;
+  page_number: number | null;
   source_text: string;
 }
 
-export async function getDocumentTests(documentId: string): Promise<MedicalTest[]> {
-  return apiGet<MedicalTest[]>(`/api/v1/documents/${documentId}/tests`);
-}
+export const getDocumentTests = (id: string) =>
+  apiGet<MedicalTest[]>(`/api/v1/documents/${id}/tests`);
+export const getDocumentSummary = (id: string) =>
+  apiGet<{ summary: string }>(`/api/v1/documents/${id}/summary`);
 
-export async function getDocumentSummary(documentId: string): Promise<{ summary: string }> {
-  return apiGet<{ summary: string }>(`/api/v1/documents/${documentId}/summary`);
-}
+/* ---------- Q&A ---------- */
+
 export interface QASource {
   document_id: string;
   page_number: number;
@@ -68,28 +84,13 @@ export interface QAResponse {
   sources: QASource[];
 }
 
-export async function askDocumentQuestion(documentId: string, question: string): Promise<QAResponse> {
-  const res = await fetch(`${API_BASE_URL}/api/v1/documents/${documentId}/ask`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question }),
-  });
-  if (!res.ok) {
-    throw new Error("Failed to get answer");
-  }
-  return res.json();
-}
-export async function askAllDocuments(question: string): Promise<QAResponse> {
-  const res = await fetch(`${API_BASE_URL}/api/v1/ask`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question }),
-  });
-  if (!res.ok) {
-    throw new Error("Failed to get answer");
-  }
-  return res.json();
-}
+export const askDocumentQuestion = (documentId: string, question: string) =>
+  apiPost<QAResponse>(`/api/v1/documents/${documentId}/ask`, { question });
+export const askAllDocuments = (question: string) =>
+  apiPost<QAResponse>("/api/v1/ask", { question });
+
+/* ---------- test history ---------- */
+
 export interface TestHistoryItem {
   document_id: string;
   filename: string;
@@ -106,23 +107,33 @@ export interface ComparisonResponse {
   comparisons: { from: TestHistoryItem; to: TestHistoryItem; difference: number | null }[];
 }
 
-export async function getTestHistory(testName: string): Promise<ComparisonResponse> {
-  return apiGet<ComparisonResponse>(`/api/v1/tests/${encodeURIComponent(testName)}/history`);
-}
+export const getTestHistory = (testName: string) =>
+  apiGet<ComparisonResponse>(`/api/v1/tests/${encodeURIComponent(testName)}/history`);
+
+/* ---------- search ---------- */
+
 export interface SearchResults {
   keyword_results: any[];
   semantic_results: any[];
 }
 
-export async function searchAll(query: string): Promise<SearchResults> {
-  return apiGet<SearchResults>(`/api/v1/search?q=${encodeURIComponent(query)}`);
+export const searchAll = (query: string) =>
+  apiGet<SearchResults>(`/api/v1/search?q=${encodeURIComponent(query)}`);
+
+/* ---------- agent ---------- */
+
+function getSessionId(): string {
+  try {
+    let id = localStorage.getItem("medextract_session");
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem("medextract_session", id);
+    }
+    return id;
+  } catch {
+    return "default";
+  }
 }
-export async function agentChat(message: string): Promise<{ answer: string }> {
-  const res = await fetch(`${API_BASE_URL}/api/v1/agent/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
-  });
-  if (!res.ok) throw new Error("Agent request failed");
-  return res.json();
-}
+
+export const agentChat = (message: string) =>
+  apiPost<{ answer: string }>("/api/v1/agent/chat", { message, session_id: getSessionId() });

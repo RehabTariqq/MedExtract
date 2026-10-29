@@ -1,20 +1,23 @@
-venv/
+# secrets
+.env
+.env.*
+!.env.example
+
+# python
 __pycache__/
 *.pyc
-.env
-*.save
+venv/
+.venv/
 
-
-# Node
+# node
 node_modules/
 dist/
-.env.local
 
-# OS
-.DS_Store
-
-# Editors
-.vscode/
+# local data
 mongo_data/
 qdrant_storage/
-grep -q "^\.env$" ~/medextract/.gitignore || echo ".env" >> ~/medextract/.gitignore
+backend/storage/uploads/*
+!backend/storage/uploads/.gitkeep
+
+# editor backups
+*~

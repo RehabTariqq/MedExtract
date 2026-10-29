@@ -9,6 +9,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Download the tokenizer at build time so the first upload doesn't depend on internet access
+RUN python3 -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
+
 COPY . .
 
 EXPOSE 8000

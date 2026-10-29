@@ -15,7 +15,10 @@ class AgentRequest(BaseModel):
 @router.post("/agent/chat")
 async def agent_chat(request: AgentRequest):
     history = await get_recent_turns(request.session_id)
-    result = await run_agent(request.message, history=history)
+    try:
+        result = await run_agent(request.message, history=history)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Agent failed: {e}")
     await save_turn(request.session_id, "user", request.message)
     await save_turn(request.session_id, "assistant", result["answer"])
     return result

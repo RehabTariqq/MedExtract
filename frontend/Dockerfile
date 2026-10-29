@@ -1,18 +1,16 @@
-FROM python:3.12-slim
-
-RUN apt-get update && apt-get install -y \
-    tesseract-ocr poppler-utils \
-    && rm -rf /var/lib/apt/lists/*
-
+# ---- build stage ----
+FROM node:20-alpine AS build
 WORKDIR /app
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-RUN python3 -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
-
+COPY package*.json ./
+RUN npm ci
 COPY . .
+# The API address is baked into the JS at build time
+ARG VITE_API_URL=http://localhost:8000
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run build
 
-EXPOSE 8000
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# ---- serve stage ----
+FROM nginx:alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80

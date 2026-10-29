@@ -36,6 +36,13 @@ function App() {
     loadDocuments();
   }, []);
 
+  // Keep refreshing the list while any report is still being processed.
+  useEffect(() => {
+    if (!documents.some((d) => d.status === "processing")) return;
+    const timer = setInterval(loadDocuments, 3000);
+    return () => clearInterval(timer);
+  }, [documents]);
+
   const doUpload = async (file: File) => {
     setUploading(true);
     setError(null);
@@ -132,6 +139,14 @@ function App() {
                 <Link to="/tests/history" className="inline-block mt-2 text-sm text-[#4A7C6E] hover:underline">
           Track a test over time &rarr;
         </Link>
+        <br />
+        <Link to="/search" className="inline-block mt-2 text-sm text-[#4A7C6E] hover:underline">
+          Search your reports &rarr;
+        </Link>
+        <br />
+        <Link to="/agent" className="inline-block mt-2 text-sm text-[#4A7C6E] hover:underline">
+          Ask the assistant &rarr;
+        </Link>
 
         <div className="mt-12">
           <h3 className="text-sm uppercase tracking-wide text-[#1C2B33]/50 mb-3">
@@ -155,7 +170,9 @@ function App() {
                       className={`text-xs px-2 py-0.5 rounded-sm ${
                         doc.status === "processed"
                           ? "text-[#4A7C6E] bg-[#4A7C6E]/10"
-                          : "text-[#C77D3C] bg-[#C77D3C]/10"
+                          : doc.status === "failed"
+                            ? "text-red-700 bg-red-700/10"
+                            : "text-[#C77D3C] bg-[#C77D3C]/10"
                       }`}
                     >
                       {doc.status}

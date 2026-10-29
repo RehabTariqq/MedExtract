@@ -13,6 +13,7 @@ def serialize_document(doc: dict) -> DocumentResponse:
         filename=doc["filename"],
         status=doc["status"],
         uploaded_at=doc["uploaded_at"],
+        error=doc.get("error"),
     )
 
 
@@ -20,9 +21,11 @@ async def create_document(filename: str, file_path: str) -> DocumentResponse:
     doc = {
         "filename": filename,
         "file_path": file_path,
-        "status": "uploaded",
+        "status": "processing",
         "uploaded_at": datetime.utcnow(),
         "pages": [],
+        "tests": [],
+        "error": None,
     }
     result = await collection.insert_one(doc)
     doc["_id"] = result.inserted_id
@@ -36,9 +39,25 @@ async def update_document_pages(document_id: str, pages: list[dict], status: str
     )
 
 
+async def set_status(document_id: str, status: str, error: str | None = None) -> None:
+    await collection.update_one(
+        {"_id": ObjectId(document_id)},
+        {"$set": {"status": status, "error": error}},
+    )
+
+
+async def get_file_path(document_id: str) -> str:
+    if not ObjectId.is_valid(document_id):
+        raise NotFoundException("Invalid document ID")
+    doc = await collection.find_one({"_id": ObjectId(document_id)})
+    if not doc:
+        raise NotFoundException("Document not found")
+    return doc["file_path"]
+
+
 async def list_documents() -> list[DocumentResponse]:
     docs = []
-    async for doc in collection.find():
+    async for doc in collection.find().sort("uploaded_at", -1):
         docs.append(serialize_document(doc))
     return docs
 

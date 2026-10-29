@@ -1,20 +1,10 @@
-from fastapi import APIRouter, UploadFile, File
-from app.schemas.document import DocumentResponse
-from app.services import (
-    document_service,
-    storage_service,
-    pdf_service,
-    extraction_service,
-    summary_service,
-    chunking_service,
-    embedding_service,
-    vector_store,
-)
+from fastapi import APIRouter, BackgroundTasks, File, UploadFile
+
 from app.core.exceptions import ValidationException
+from app.schemas.document import DocumentResponse
+from app.services import document_service, processing_service, storage_service
 
 router = APIRouter()
-
-ALLOWED_TYPES = ["application/pdf"]
 
 
 @router.get("/ping")
@@ -23,38 +13,31 @@ def ping_documents():
 
 
 @router.post("/upload", response_model=DocumentResponse)
-async def upload_document(file: UploadFile = File(...)):
-    if file.content_type not in ALLOWED_TYPES:
-        raise ValidationException("Only PDF files are allowed")
-
+async def upload_document(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    filename = file.filename or "report.pdf"
     content = await file.read()
 
+    is_pdf_type = file.content_type == "application/pdf" or filename.lower().endswith(".pdf")
+    if not is_pdf_type or not content.startswith(b"%PDF"):
+        raise ValidationException("Only PDF files are allowed")
     if len(content) > storage_service.MAX_FILE_SIZE:
         raise ValidationException("File exceeds maximum size of 20MB")
 
-    file_path = storage_service.save_upload_file(content, file.filename)
-    document = await document_service.create_document(file.filename, file_path)
+    file_path = storage_service.save_upload_file(content, filename)
+    document = await document_service.create_document(filename, file_path)
 
-    pages = pdf_service.extract_text_from_pdf(file_path)
-    await document_service.update_document_pages(document.id, pages, "processed")
-
-    all_tests = []
-    for page in pages:
-        tests = extraction_service.extract_tests_from_page(page["text"], page["page_number"])
-        all_tests.extend(tests)
-    await document_service.save_extracted_tests(document.id, all_tests)
-
-    summary_text = summary_service.generate_report_summary(all_tests)
-    await document_service.save_summary(document.id, summary_text)
-
-    chunks = chunking_service.chunk_pages(pages, document.id)
-    if chunks:
-        chunk_texts = [c["text"] for c in chunks]
-        embeddings = embedding_service.embed_texts(chunk_texts)
-        vector_store.upsert_chunks(chunks, embeddings)
-
-    document.status = "processed"
+    # Return immediately; the slow work happens after the response is sent.
+    background_tasks.add_task(processing_service.process_document, document.id, file_path)
     return document
+
+
+@router.post("/{document_id}/reprocess", response_model=DocumentResponse)
+async def reprocess_document(document_id: str, background_tasks: BackgroundTasks):
+    """Re-run extraction/embedding for a document (e.g. ones uploaded before the bug fixes)."""
+    file_path = await document_service.get_file_path(document_id)
+    await document_service.set_status(document_id, "processing")
+    background_tasks.add_task(processing_service.process_document, document_id, file_path)
+    return await document_service.get_document(document_id)
 
 
 @router.get("/", response_model=list[DocumentResponse])

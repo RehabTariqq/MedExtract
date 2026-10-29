@@ -1,7 +1,13 @@
 import json
+import logging
 import re
+
+from pydantic import ValidationError
+
+from app.schemas.medical_test import MedicalTest
 from app.services.llm.factory import get_llm_client
-from app.schemas.medical_test import ExtractionResult
+
+logger = logging.getLogger(__name__)
 
 EXTRACTION_PROMPT = """You are extracting structured data from a medical lab report page.
 
@@ -29,33 +35,53 @@ Page text:
 """
 
 
-def _clean_json_response(raw: str) -> str:
+def _parse_json_loosely(raw: str):
+    """Pull a JSON object/array out of an LLM reply, tolerating fences and chatter."""
+    if not raw:
+        raise ValueError("empty LLM response")
     cleaned = raw.strip()
-    cleaned = re.sub(r"^```json\s*", "", cleaned)
-    cleaned = re.sub(r"^```\s*", "", cleaned)
-    cleaned = re.sub(r"```$", "", cleaned)
-    return cleaned.strip()
+    cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+    cleaned = re.sub(r"\s*```$", "", cleaned).strip()
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+    start = cleaned.find("{")
+    end = cleaned.rfind("}")
+    if start != -1 and end > start:
+        return json.loads(cleaned[start : end + 1])
+    raise ValueError("no JSON object found in LLM response")
 
 
 def extract_tests_from_page(page_text: str, page_number: int) -> list[dict]:
-    if not page_text.strip():
+    if not page_text or not page_text.strip():
         return []
 
     client = get_llm_client()
     prompt = EXTRACTION_PROMPT.format(page_text=page_text)
+
+    # LLM/API errors are allowed to propagate so the upload is marked "failed"
+    # with a real reason instead of silently producing zero tests.
     raw_response = client.generate(prompt)
 
     try:
-        cleaned = _clean_json_response(raw_response)
-        parsed = json.loads(cleaned)
-        result = ExtractionResult(**parsed)
-    except (json.JSONDecodeError, TypeError, ValueError) as e:
-        print(f"Extraction parse error on page {page_number}: {e}")
+        parsed = _parse_json_loosely(raw_response)
+    except (ValueError, json.JSONDecodeError) as e:
+        logger.warning("Page %s: could not parse LLM JSON (%s). Raw: %.300s", page_number, e, raw_response)
         return []
 
-    tests = []
-    for test in result.tests:
-        test_dict = test.model_dump()
-        test_dict["page_number"] = page_number
-        tests.append(test_dict)
+    items = parsed.get("tests", []) if isinstance(parsed, dict) else parsed
+    if not isinstance(items, list):
+        return []
+
+    tests: list[dict] = []
+    for item in items:
+        try:
+            test = MedicalTest(**item)  # validate each test on its own
+        except (ValidationError, TypeError) as e:
+            logger.warning("Page %s: skipped invalid test %s (%s)", page_number, item, e)
+            continue
+        d = test.model_dump()
+        d["page_number"] = page_number
+        tests.append(d)
     return tests

@@ -1,3 +1,7 @@
+import re
+
+from starlette.concurrency import run_in_threadpool
+
 from app.db.database import database
 from app.services.retrieval_service import retrieve_relevant_chunks
 
@@ -6,6 +10,7 @@ collection = database["documents"]
 
 async def keyword_search(query: str) -> list[dict]:
     results = []
+    query = re.escape(query)
     cursor = collection.find({
         "$or": [
             {"filename": {"$regex": query, "$options": "i"}},
@@ -17,7 +22,7 @@ async def keyword_search(query: str) -> list[dict]:
             "type": "keyword",
             "document_id": str(doc["_id"]),
             "filename": doc["filename"],
-            "matched_tests": [t["test_name"] for t in doc.get("tests", []) if query.lower() in t["test_name"].lower()],
+            "matched_tests": [t["test_name"] for t in doc.get("tests", []) if re.search(query, t["test_name"], re.IGNORECASE)],
         })
     return results
 
@@ -38,5 +43,5 @@ def semantic_search(query: str) -> list[dict]:
 
 async def combined_search(query: str) -> dict:
     keyword_results = await keyword_search(query)
-    semantic_results = semantic_search(query)
+    semantic_results = await run_in_threadpool(semantic_search, query)
     return {"keyword_results": keyword_results, "semantic_results": semantic_results}

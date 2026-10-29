@@ -1,9 +1,9 @@
-from app.services.embedding_service import embed_text
+from app.services.embedding_service import embed_query
 from app.services.vector_store import search_similar
 
 
 def retrieve_relevant_chunks(query: str, document_id: str | None = None, top_k: int = 5) -> list[dict]:
-    query_vector = embed_text(query)
+    query_vector = embed_query(query)
     results = search_similar(query_vector, document_id=document_id, top_k=top_k)
 
     chunks = []
