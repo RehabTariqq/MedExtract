@@ -5,6 +5,8 @@ An AI-powered medical document intelligence system. Upload medical reports (PDF)
 This project is being built on Ubuntu Linux, using Python, FastAPI, MongoDB, React, and modern AI/RAG tooling.
 
 ## Status
+Local hosting working up to now;
+https://3c1ppjbc-5173.inc1.devtunnels.ms/
 In active development, following a structured build roadmap.
 
 
