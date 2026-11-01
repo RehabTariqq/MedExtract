@@ -23,10 +23,16 @@ MedExtract is an informational document-analysis tool. It does not diagnose cond
 ## Running locally (Docker)
 
 1. Copy the env template and fill in your keys:
+   ```
+   cp backend/.env.example backend/.env
+   ```
    - `GROQ_API_KEY` from https://console.groq.com
    - `COHERE_API_KEY` from https://dashboard.cohere.com
    - `JWT_SECRET_KEY`: any long random text
 2. Start everything:
+   ```
+   docker compose up --build
+   ```
 3. Open http://localhost:5173 and upload a PDF lab report.
 
 Uploads are processed in the background. The report page shows `processing`, then `processed`, or `failed` with the reason and a "Try again" button.
