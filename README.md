@@ -6,8 +6,10 @@ This project is being built on Ubuntu Linux, using Python, FastAPI, MongoDB, Rea
 
 ## Status
 Local hosting working up to now;
-https://3c1ppjbc-5173.inc1.devtunnels.ms/
-In active development, following a structured build roadmap.
+
+Test and try: https://3c1ppjbc-5173.inc1.devtunnels.ms/
+
+**In active development, following a structured build roadmap.**
 
 
 
