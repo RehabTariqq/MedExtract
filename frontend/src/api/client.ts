@@ -1,6 +1,6 @@
 // Set VITE_API_URL in frontend/.env.local (local) or in your Render build settings (production).
 const API_BASE_URL: string =
-  import.meta.env.VITE_API_URL || "https://medextract-backend-mjjf.onrender.com";
+  import.meta.env.VITE_API_URL ?? "https://medextract-backend-mjjf.onrender.com";
 
 async function errorMessage(res: Response, fallback: string): Promise<string> {
   try {
